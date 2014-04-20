@@ -50,6 +50,8 @@ class Parent private[sdom] (override val spec:ParentSpec[_],val parent:Option[Pa
   lazy val children:Iterable[Child] =
     spec.children.map(descend)
 
+  def childElements = elementsOnly(children)
+
   // It would be more efficient to do the filtering prior to creating the Child to wrap the ChildSpec.  However,
   // this way, we can keep reusing the same set of RootedChildren that we create over and over instead of having
   // to create them anew for each call.  I think this is better.
@@ -60,6 +62,8 @@ class Parent private[sdom] (override val spec:ParentSpec[_],val parent:Option[Pa
       case p:Parent => p.descendants
       case _ => Iterable.empty
     }))
+
+  def descendantElements = elementsOnly(descendants)
 
   override def \[T <: Child](selector:Selector[T]):Iterable[T] =
     children.flatMap(selector)
@@ -74,6 +78,9 @@ class Parent private[sdom] (override val spec:ParentSpec[_],val parent:Option[Pa
     case c:CommentSpec => Comment(c,Some(this))
     case p:ProcessingInstructionSpec => ProcessingInstruction(p,Some(this))
   }
+
+  private[this] def elementsOnly(nodes:Iterable[Node]):Iterable[Element] =
+    nodes.filter(_.isInstanceOf[Element]).map(_.asInstanceOf[Element])
 }
 
 object Parent {
