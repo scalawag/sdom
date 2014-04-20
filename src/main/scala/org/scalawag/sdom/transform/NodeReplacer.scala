@@ -130,8 +130,8 @@ private[sdom] object NodeReplacer {
         if ( transformed.size != 1 || transformed.head != node ) {
           // Check to make sure the replacements are valid for the type being replaced...
           transformed foreach { r =>
-            if ( ! r.getClass.isAssignableFrom(targetClass) )
-              throw new IllegalArgumentException(s"Nodes of type ${this.getClass} can only be transformed into nodes of type ${targetClass} yet one was transformed into a ${r.getClass}: $this -> $r")
+            if ( ! targetClass.isAssignableFrom(r.getClass) )
+              throw new IllegalArgumentException(s"Nodes of type ${rootedNode.getClass} can only be transformed into nodes of type ${targetClass} yet one was transformed into a ${r.getClass}: $rootedNode -> $r")
           }
           transformed.asInstanceOf[Iterable[T]]
         } else {
