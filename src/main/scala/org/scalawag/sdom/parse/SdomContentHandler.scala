@@ -5,7 +5,7 @@ import org.scalawag.sdom._
 import scala.collection.mutable.Stack
 import org.xml.sax.ext.LexicalHandler
 
-class SdomContentHandler extends ContentHandler with LexicalHandler {
+class SdomContentHandler(configuration:BuilderConfiguration) extends ContentHandler with LexicalHandler {
   private[this] var locator:Option[Locator] = None
   private[this] val attributeStack = new Stack[Seq[AttributeSpec]]
   private[this] val childrenStack = new Stack[Seq[ChildSpec]]
@@ -44,10 +44,14 @@ class SdomContentHandler extends ContentHandler with LexicalHandler {
   }
 
   override def characters(ch:Array[Char],start:Int,length:Int) {
-    if ( isCData )
-      appendToChildren(CDataSpec(new String(ch,start,length)))
-    else
-      appendToChildren(TextSpec(new String(ch,start,length)))
+    val original = new String(ch,start,length)
+    val trimmed = if ( configuration.trimWhitespace ) original.trim else original
+    if ( ! trimmed.isEmpty || ! configuration.discardWhitespace ) {
+      if ( isCData && ! configuration.treatCDataAsText )
+        appendToChildren(CDataSpec(trimmed))
+      else
+        appendToChildren(TextSpec(trimmed))
+    }
   }
 
   override def ignorableWhitespace(ch:Array[Char],start:Int,length:Int) =
@@ -58,10 +62,12 @@ class SdomContentHandler extends ContentHandler with LexicalHandler {
   }
 
   override def endPrefixMapping(prefix:String) {
+    // NOOP
   }
 
   override def comment(ch:Array[Char],start:Int,length:Int) {
-    appendToChildren(CommentSpec(new String(ch,start,length)))
+    if ( ! configuration.discardComments )
+      appendToChildren(CommentSpec(new String(ch,start,length)))
   }
 
   override def startCDATA() {
@@ -73,19 +79,19 @@ class SdomContentHandler extends ContentHandler with LexicalHandler {
   }
 
   override def endEntity(name: String) {
-    // noop
+    // NOOP
   }
 
   override def startEntity(name: String) {
-    // noop
+    // NOOP
   }
 
   override def endDTD() {
-    // noop
+    // NOOP
   }
 
   override def startDTD(name: String, publicId: String, systemId: String) {
-    // noop
+    // NOOP
   }
 
   override def skippedEntity(name:String) {
@@ -93,7 +99,8 @@ class SdomContentHandler extends ContentHandler with LexicalHandler {
   }
 
   override def processingInstruction(target:String,data:String) {
-    appendToChildren(ProcessingInstructionSpec(target,data))
+    if ( ! configuration.discardProcessingInstructions )
+      appendToChildren(ProcessingInstructionSpec(target,data))
   }
 
   override def setDocumentLocator(locator:Locator) {
@@ -101,7 +108,15 @@ class SdomContentHandler extends ContentHandler with LexicalHandler {
   }
 
   private[this] def appendToChildren(child:ChildSpec) {
-    childrenStack.push(childrenStack.pop :+ child)
+    val oldChildren = childrenStack.pop
+
+    val newChildren =
+      if ( configuration.collapseAdjacentTextLikes && child.isInstanceOf[TextLikeSpec] )
+        TextLikeSpec.collapseAppend(oldChildren,child)
+      else
+        oldChildren :+ child
+
+    childrenStack.push(newChildren)
   }
 
   private[this] def getPrefix(qName:String):Option[String] = qName.indexOf(':') match {

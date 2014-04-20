@@ -22,6 +22,9 @@ package object sdom extends Selectors with Transformers with XPathImplicits with
     def \@(selector:Selector[Attribute]) =
       nodes.flatMap( _ \@ selector )
   }
+
+  // The default parser
+  object XML extends Parser
 }
 
 /* sdom -- Copyright 2014 Justin Patterson -- All Rights Reserved */

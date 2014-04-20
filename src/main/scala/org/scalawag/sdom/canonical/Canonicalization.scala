@@ -16,11 +16,7 @@ trait Canonicalization {
 
     def canonical = canonicalize()
 
-    def canonicalize(treatCDataAsText:Boolean = true,
-                     collapseAdjacentTexts:Boolean = true,
-                     includeWhitespace:Boolean = false,
-                     includeComments:Boolean = false,
-                     includeProcessingInstructions:Boolean = false):T = {
+    def canonicalize(configuration:BuilderConfiguration = BuilderConfiguration.Simplest):T = {
 
       // This is where we'll attach all the new canonical namespace declarations
       val root = xml match {
@@ -55,15 +51,12 @@ trait Canonicalization {
           // Collapse multiple adjacent TextSpec nodes into a single TextSpec node.
 
           val collapsedCanonicalChildren =
-            if ( collapseAdjacentTexts ) {
-              canonicalChildren.foldRight(Seq.empty[ChildSpec]) { (child,acc) =>
-                // If both the current child and the first child in the accumulator are text, combine them.
-                if ( child.isInstanceOf[TextSpec] && ! acc.isEmpty && acc.head.isInstanceOf[TextSpec] ) {
-                  val newHead = TextSpec(child.asInstanceOf[TextSpec].text + acc.head.asInstanceOf[TextSpec].text)
-                  newHead +: acc.tail
-                } else {
-                  child +: acc
-                }
+            if ( configuration.collapseAdjacentTextLikes ) {
+              canonicalChildren.foldLeft(Seq.empty[ChildSpec]) { (acc,child) =>
+                if ( configuration.collapseAdjacentTextLikes && child.isInstanceOf[TextLikeSpec] )
+                  TextLikeSpec.collapseAppend(acc,child)
+                else
+                  acc :+ child
               }
             } else {
               canonicalChildren
@@ -75,29 +68,29 @@ trait Canonicalization {
                           children = collapsedCanonicalChildren))
 
         case c:CommentSpec =>
-          if ( includeComments )
-            Iterable(c)
-          else
+          if ( configuration.discardComments )
             Iterable.empty
+          else
+            Iterable(c)
 
         case t:TextLikeSpec =>
-          val text = if ( includeWhitespace ) t.text else t.text.trim
+          val text = if ( configuration.trimWhitespace ) t.text.trim else t.text
 
           val createFn = t match {
-            case c:CDataSpec if ! treatCDataAsText => CDataSpec.apply _
+            case c:CDataSpec if ! configuration.treatCDataAsText => CDataSpec.apply _
             case _ => TextSpec.apply _
           }
 
-          if ( includeWhitespace || ! text.isEmpty )
+          if ( ! configuration.discardWhitespace || ! text.isEmpty )
             Iterable(createFn(text))
           else
             Iterable.empty
 
         case p:ProcessingInstructionSpec =>
-          if ( includeProcessingInstructions )
-            Iterable(p)
-          else
+          if ( configuration.discardProcessingInstructions )
             Iterable.empty
+          else
+            Iterable(p)
 
       }).asInstanceOf[Iterable[T]] // The code above ensures that this cast works.
 

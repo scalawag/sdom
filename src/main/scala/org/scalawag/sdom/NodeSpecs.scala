@@ -155,6 +155,19 @@ sealed trait TextLikeSpec extends ChildSpec {
   val text:String
 }
 
+private object TextLikeSpec {
+  def collapseAppend(existingChildren:Seq[ChildSpec],newChild:ChildSpec):Seq[ChildSpec] =
+    if ( newChild.isInstanceOf[TextSpec] && ! existingChildren.isEmpty && existingChildren.last.isInstanceOf[TextSpec] ) {
+      val newLast = TextSpec(existingChildren.last.asInstanceOf[TextSpec].text + newChild.asInstanceOf[TextSpec].text)
+      existingChildren.dropRight(1) :+ newLast
+    } else if ( newChild.isInstanceOf[CDataSpec] && ! existingChildren.isEmpty && existingChildren.last.isInstanceOf[CDataSpec] ) {
+      val newLast = CDataSpec(existingChildren.last.asInstanceOf[CDataSpec].text + newChild.asInstanceOf[CDataSpec].text)
+      existingChildren.dropRight(1) :+ newLast
+    } else {
+      existingChildren :+ newChild
+    }
+}
+
 case class CDataSpec(text:String) extends TextLikeSpec
 
 case class TextSpec(text:String) extends TextLikeSpec
