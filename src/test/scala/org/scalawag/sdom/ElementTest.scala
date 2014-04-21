@@ -133,7 +133,7 @@ class ElementTest extends FunSuite with Matchers {
   test("xpath matching elements (precompiled)") {
     val x = XML.parse("""<a xmlns="A"><b xmlns="B" id="4"/><c xmlns="C" id="3"/><d xmlns="D" id="2"/></a>""")
     val xpath = XPath.elements("//*[@id>=3]")
-    val results = ( x %% xpath ).toSeq
+    val results = ( x % xpath ).toSeq
     results.size should be (2)
     results(0).name should be (ElementName("b","B"))
     results(0).attributeMap("id").value should be ("4")
