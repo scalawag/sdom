@@ -18,9 +18,12 @@ object ScalaXmlConversions {
 import ScalaXmlConversions._
 
 trait ScalaXmlConversions {
-  implicit def elemToElement(elem:sxml.Elem)(implicit strategy:Strategy = Strategies.Flexible) = {
+  implicit def literalToElementSpec(e:sxml.Elem)(implicit strategy:Strategy = Strategies.Flexible) =
+    literalToChildSpecs(e).head.asInstanceOf[ElementSpec]
 
-    def convert(node:sxml.Node,fromParentScope:sxml.NamespaceBinding = sxml.TopScope,toParentScope:NamespacesLike = Namespaces.Empty):Option[NodeSpec] = node match {
+  implicit def literalToChildSpecs(nodes:sxml.NodeSeq)(implicit strategy:Strategy = Strategies.Flexible):Iterable[ChildSpec] = {
+
+    def convert(node:sxml.NodeSeq,fromParentScope:sxml.NamespaceBinding = sxml.TopScope,toParentScope:NamespacesLike = Namespaces.Empty):Iterable[NodeSpec] = node match {
       case n:sxml.Elem =>
 
         def getNamespaces(b:sxml.NamespaceBinding):Seq[NamespaceSpec] =
@@ -83,22 +86,25 @@ trait ScalaXmlConversions {
 
         val uri = scope.prefixToUri(Option(n.prefix).getOrElse(""))
 
-        Some(new ElementSpec(name = ElementName(n.label,uri),
-                         attributes = getAttributes(n.attributes),
-                         children = n.child.flatMap(convert(_,n.scope,scope).asInstanceOf[Option[ChildSpec]]),
-                         // Only the locally-introduced namespaces
-                         namespaces = if ( strategy.keepNamespaces ) namespaces else Seq.empty,
-                         prefix = maybeIncludePrefix(Option(n.prefix))))
+        Iterable(new ElementSpec(name = ElementName(n.label,uri),
+                                 attributes = getAttributes(n.attributes),
+                                 children = n.child.flatMap(convert(_,n.scope,scope).asInstanceOf[Iterable[ChildSpec]]),
+                                 // Only the locally-introduced namespaces
+                                 namespaces = if ( strategy.keepNamespaces ) namespaces else Seq.empty,
+                                 prefix = maybeIncludePrefix(Option(n.prefix))))
 
-      case n:sxml.PCData => Some(CDataSpec(n.text))
-      case n:sxml.Atom[_] => Some(TextSpec(n.text))
-      case n:sxml.ProcInstr => Some(ProcessingInstructionSpec(n.target,n.proctext))
-//      case n:sxml.EntityRef => Some(EntityRef(n.entityName)) - dropped by sdom
-      case n:sxml.Comment => Some(CommentSpec(n.commentText))
-      case _ => None
+      case n:sxml.PCData => Iterable(CDataSpec(n.text))
+      case n:sxml.Atom[_] => Iterable(TextSpec(n.text))
+      case n:sxml.ProcInstr => Iterable(ProcessingInstructionSpec(n.target,n.proctext))
+//      case n:sxml.EntityRef => Iterable(EntityRef(n.entityName)) - dropped by sdom
+      case n:sxml.Comment => Iterable(CommentSpec(n.commentText))
+
+      case s:sxml.NodeSeq => s.flatMap(convert(_,fromParentScope,toParentScope))
+
+//      case _ => Iterable.empty
     }
 
-    convert(elem).get.asInstanceOf[ElementSpec]
+    convert(nodes).map(_.asInstanceOf[ChildSpec])
   }
 
   // Must be a Element so that the namespaces are all resolved and we can generate them in the scala.xml output

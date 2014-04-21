@@ -95,10 +95,12 @@ case class Document(override val spec:DocumentSpec) extends Parent(spec,None) {
 }
 
 object Document {
-  def apply(children:ElementSpec*):Document =
+  def apply(children:Iterable[ChildSpec]):Document =
     Document(DocumentSpec(children))
-  def apply(elem:scala.xml.Elem)(implicit strategy:Strategy = Strategies.Flexible):Document =
-    Document(elemToElement(elem))
+  def apply(children:ChildSpec*):Document =
+    apply(children:_*)
+  def apply(nodes:scala.xml.NodeSeq)(implicit strategy:Strategy = Strategies.Flexible):Document =
+    apply(literalToChildSpecs(nodes))
 }
 
 case class Element private[sdom] (override val spec:ElementSpec,override val parent:Option[Parent])
