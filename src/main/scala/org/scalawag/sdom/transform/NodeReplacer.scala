@@ -29,7 +29,7 @@ object Replacements {
 }
 
 private[sdom] object NodeReplacer {
-  def rebuildTree(from:Node,replacements:Replacements):Iterable[NodeSpec] = {
+  def rebuildTree(from:Node,replacements:Replacements):Document = {
     def helper(current:Node):Iterable[NodeSpec] = current match {
       case d:Document =>
         Iterable(replacements.documents.get(d).getOrElse {
@@ -65,12 +65,13 @@ private[sdom] object NodeReplacer {
       case None => node
     }
 
-    val root = rootNode(from)
+    val root = rootNode(from).asInstanceOf[Document]
 
     if ( replacements.isEmpty ) {
-      Iterable(root.spec)
+      root
     } else {
-      helper(root)
+      // Passing in a Document to the helper function always yields an Iterable with exactly one DocumentSpec in it.
+      Document(helper(root).head.asInstanceOf[DocumentSpec])
     }
   }
 
@@ -157,47 +158,47 @@ private[sdom] object NodeReplacer {
     }
   }
 
-  def transform(document:Document,fn:PartialFunction[DocumentSpec,DocumentSpec]):Iterable[NodeSpec] = {
+  def transform(document:Document,fn:PartialFunction[DocumentSpec,DocumentSpec]) = {
     val replacements = calculateReplacements(document,fn)
     NodeReplacer.rebuildTree(document,replacements)
   }
 
-  def transform(child:Child,fn:PartialFunction[ChildSpec,Iterable[ChildSpec]]):Iterable[NodeSpec] = {
+  def transform(child:Child,fn:PartialFunction[ChildSpec,Iterable[ChildSpec]]) = {
     val replacements = calculateReplacements(child,fn)
     NodeReplacer.rebuildTree(child,replacements)
   }
 
-  def transform(attribute:Attribute,fn:PartialFunction[AttributeSpec,Iterable[AttributeSpec]]):Iterable[NodeSpec] = {
+  def transform(attribute:Attribute,fn:PartialFunction[AttributeSpec,Iterable[AttributeSpec]]) = {
     val replacements = calculateReplacements(attribute,fn)
     NodeReplacer.rebuildTree(attribute,replacements)
   }
 
-  def transform(namespace:Namespace,fn:PartialFunction[NamespaceSpec,Iterable[NamespaceSpec]]):Iterable[NodeSpec] = {
+  def transform(namespace:Namespace,fn:PartialFunction[NamespaceSpec,Iterable[NamespaceSpec]]) = {
     val replacements = calculateReplacements(namespace,fn)
     NodeReplacer.rebuildTree(namespace,replacements)
   }
 
-  def transform(node:Node,fn:PartialFunction[NodeSpec,Iterable[NodeSpec]]):Iterable[NodeSpec] = {
+  def transform(node:Node,fn:PartialFunction[NodeSpec,Iterable[NodeSpec]]) = {
     val replacements = calculateReplacements(node,fn)
     NodeReplacer.rebuildTree(node,replacements)
   }
 
-  def transformChildren(children:Iterable[Child],fn:PartialFunction[ChildSpec,Iterable[ChildSpec]]):Iterable[NodeSpec] = {
+  def transformChildren(children:Iterable[Child],fn:PartialFunction[ChildSpec,Iterable[ChildSpec]]) = {
     val replacements = children.map(calculateReplacements(_,fn)).reduceLeft(_ + _)
     NodeReplacer.rebuildTree(children.head,replacements)
   }
 
-  def transformAttributes(attributes:Iterable[Attribute],fn:PartialFunction[AttributeSpec,Iterable[AttributeSpec]]):Iterable[NodeSpec] = {
+  def transformAttributes(attributes:Iterable[Attribute],fn:PartialFunction[AttributeSpec,Iterable[AttributeSpec]]) = {
     val replacements = attributes.map(calculateReplacements(_,fn)).reduceLeft(_ + _)
     NodeReplacer.rebuildTree(attributes.head,replacements)
   }
 
-  def transformNamespaces(namespaces:Iterable[Namespace],fn:PartialFunction[NamespaceSpec,Iterable[NamespaceSpec]]):Iterable[NodeSpec] = {
+  def transformNamespaces(namespaces:Iterable[Namespace],fn:PartialFunction[NamespaceSpec,Iterable[NamespaceSpec]]) = {
     val replacements = namespaces.map(calculateReplacements(_,fn)).reduceLeft(_ + _)
     NodeReplacer.rebuildTree(namespaces.head,replacements)
   }
 
-  def transformNodes(nodes:Iterable[Node],fn:PartialFunction[NodeSpec,Iterable[NodeSpec]]):Iterable[NodeSpec] = {
+  def transformNodes(nodes:Iterable[Node],fn:PartialFunction[NodeSpec,Iterable[NodeSpec]]) = {
     val replacements = nodes.map(calculateReplacements(_,fn)).reduceLeft(_ + _)
     NodeReplacer.rebuildTree(nodes.head,replacements)
   }
