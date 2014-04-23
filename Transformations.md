@@ -1,5 +1,9 @@
 The result of almost any node query (except for a Document) can be transformed.  This means that you can apply a partial function to each node in a result set and to create a new Document with the transformed nodes replacing the originals.  The output of the function must be an Iterable of the same type as the input of the function.
 
+If you change both a node and one of its descendants, the changes that you made to its descendants will be lost due to the ancestor being transformed.  The ancestors immutable children will be determined by the transformation partial function and so the transformations to its old descendants are irrelevant.
+
+TODO: make transformations build on the previous and explain that to the reader.
+
 # transform
 
 When you want to create a new document from an old document, use transform with selector.
@@ -94,6 +98,12 @@ Transformations expect that you replace any node with a compatible node in the t
     ( xml % "//b[@id>=2]" ) transform { case e:ElementSpec => e.children }
 
     // -> Document(<a><b id="1">A</b>AA</a>)
+
+Transformations also allow you to manipulate attributes.
+
+    ( xml %@ "//b/@id" ) transform { case a => Iterable(a.copy(value = a.value * 3)) }
+
+    // -> Document(<a><b id="111">A</b><b id="222">A</b><b id="333">A</b></a>)
 
 # transformNodes TODO - REMOVE THIS FROM THE CODE, IT'S USELESS
 
