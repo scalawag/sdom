@@ -1,0 +1,1 @@
+SDOM is a library for processing XML in a Scala-way.
