@@ -37,7 +37,7 @@ Here are some more examples:
 
     // -> Iterable[Child] = List(Element(<b>1</b>), Element(<b><c>8</c></b>), Element(<d><b>3</b></d>))
 
-Note that the return type ais Iterable[Child] even though all the children are Elements.  This is because they
+Note that the return type above is Iterable[Child] even though all the children are Elements.  This is because they
 _could_ have been another type like Text.  Witness:
 
     x1 \\ "c" \ node
