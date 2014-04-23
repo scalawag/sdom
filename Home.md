@@ -7,3 +7,6 @@ Features include:
 * Built in XML Schema validation
 * Full support for XPath selections
 * [[Transformations]]
+
+
+Literals have three modes (explain differences)
