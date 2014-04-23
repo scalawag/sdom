@@ -1,6 +1,8 @@
 The result of almost any node query (except for a Document) can be transformed.  This means that you can apply a partial function to each node in a result set and to create a new Document with the transformed nodes replacing the originals.  The output of the function must be an Iterable of the same type as the input of the function.
 
-# Transform
+# transform
+
+When you want to create a new document from an old document, use transform with selector.
 
     import org.scalawag.sdom._
 
@@ -70,3 +72,26 @@ produces
       <!-- Here's a comment ABOUT the delay. -->
       <delay>10s</delay>
     </config>
+
+Of course, it works with any kind of selector.
+
+    import org.scalawag.sdom._
+
+    val xml = Document(<a><b id="1">A</b><b id="2">A</b><b id="3">A</b></a>)
+
+    // remove is a predefined partial function that removes whatever was selected from the document.
+    ( xml % "//b[@id>=2]" ) transform remove
+
+    // -> Document(<a><b id="1">A</b></a>)
+
+# transformNodes
+
+transformNodes is useful if you want to transform some nodes but the result is not a document for whatever reason.  `transform` is actually just a specialization of this method that assumes the resulting Iterable contains exactly one DocumentSpec.
+
+    import org.scalawag.sdom._
+
+    val xml:ElementSpec = <a><b id="1">A</b><b id="2">A</b><b id="3">A</b></a>
+
+    ( xml \ "a" ) transform { n => Iterable(n,n) }
+
+    // -> Document(<a><b id="1">A</b></a>)
