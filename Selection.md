@@ -9,6 +9,7 @@ Depending on what you put on the right side of the operator, you'll get a differ
 * node - selects all Nodes
 * ElementName - selects Elements with the specified name
 
+
     import org.scalawag.sdom._
     val x1 = XML.parse("<a><b>1</b><b><c>2</c></b><d><b>3</b></d></a>")
 
