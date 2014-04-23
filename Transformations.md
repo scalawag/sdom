@@ -84,7 +84,7 @@ Of course, it works with any kind of selector.
 
     // -> Document(<a><b id="1">A</b></a>)
 
-# transformNodes
+# transformNodes TODO - REMOVE THIS FROM THE CODE, IT'S USELESS
 
 transformNodes is useful if you want to transform some nodes but the result is not a document for whatever reason.  `transform` is actually just a specialization of this method that assumes the resulting Iterable contains exactly one DocumentSpec.
 
