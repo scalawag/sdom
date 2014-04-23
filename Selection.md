@@ -54,6 +54,8 @@ _could_ have been another type like Text.
 
 # Namespaces
 
+## Elements
+
 As you may have noticed above, there is an implicit conversion from String to ElementName.  This means that you can use a pattern similar to what you may be used to with the built-in scala.xml classes to select child elements with a specific name.  One thing that SDOM adds is better namespace support.  It gives you the ability to search within specific namespaces using a pattern similar to that used within XML itself.  To search for elements by their full name, you can either be explicit:
 
     val x2 = XML.parse("""
@@ -101,3 +103,35 @@ That's a perfectly fine way to address the root element.  There are several othe
 
     // -> Iterable[Child] = List(Element(<a xmlns="A">...</a>)
     
+There is no way to query for the specific prefix used in an XML document.  This is against the philosophy of SDOM which says that the prefix is not semantically significant outside of the document.  It's only used _within the serialized XML document_ to map to a namespace which is valid outside the document.  These selectors are outside the document and have their own prefix mapping within your source code that has nothing to do with the mapping in the document.
+
+## Attributes
+
+Note that, according to the XML specification, attributes with no prefix belong to the namespace "" and not the default prefix.  SDOM behaves consistently with this behavior in its selectors.  You have to be explicit about attribute namespaces even if there is an implicit Namespaces in scope that sets the default namespace.
+
+    val x3 = XML.parse("""<a xmlns:n="NS1"><b n:id="2" id="3"/></a>""")
+
+    {
+      implicit val namespaces = Namespaces("" -> "NS1")
+      // We have to explicit search for element "b" in the "" namespace or else it will use the default.
+      x3 \\ "{}b" \@ "id"
+    }
+
+    // -> Iterable[Attribute] = List(Attribute(id="3"))
+
+That selects the "id" attribute in the "" namespace.  Of course, the prefixed and explicit style names still work with attributes.
+
+    {
+      implicit val namespaces = Namespaces("p" -> "NS1")
+      x3 \\ "b" \@ "p:id"
+    }
+
+    // -> Iterable[Attribute] = List(Attribute(id="2"))
+
+    x3 \\ "b" \@ "{NS1}id"
+
+    // -> Iterable[Attribute] = List(Attribute(id="2"))
+
+    x3 \\ "b" \@ AttributeName("id","NS1")
+
+    // -> Iterable[Attribute] = List(Attribute(id="2"))
