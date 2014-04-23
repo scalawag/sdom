@@ -84,6 +84,17 @@ Of course, it works with any kind of selector.
 
     // -> Document(<a><b id="1">A</b></a>)
 
+Transformations expect that you replace any node with a compatible node in the tree.  This means that you can replace any type of ChildSpec with zero or more of any other ChildSpec.
+
+    import org.scalawag.sdom._
+
+    val xml = Document(<a><b id="1">A</b><b id="2">A</b><b id="3">A</b></a>)
+
+    // Replace all selected elements with their children
+    ( xml % "//b[@id>=2]" ) transform { case e:ElementSpec => e.children }
+
+    // -> Document(<a><b id="1">A</b>AA</a>)
+
 # transformNodes TODO - REMOVE THIS FROM THE CODE, IT'S USELESS
 
 transformNodes is useful if you want to transform some nodes but the result is not a document for whatever reason.  `transform` is actually just a specialization of this method that assumes the resulting Iterable contains exactly one DocumentSpec.
