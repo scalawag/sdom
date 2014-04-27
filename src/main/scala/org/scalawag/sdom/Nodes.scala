@@ -17,6 +17,7 @@ import org.scalawag.sdom.ScalaXmlConversions.{Strategies,Strategy}
 
 abstract class Node {
   val parent:Option[Parent]
+  lazy val document:Document = parent.map(_.document).getOrElse(this.asInstanceOf[Document])
   val spec:NodeSpec
 
   def ancestry:Iterable[Parent] = {
@@ -47,17 +48,16 @@ trait Named extends Node {
 class Parent private[sdom] (override val spec:ParentSpec[_],val parent:Option[Parent]) extends Node with ChildContainer {
   val scope:NamespacesLike = Namespaces.Empty
 
-  lazy val children:Iterable[Child] =
-    spec.children.map(descend)
+  lazy val children:Selection[Child] = Selection(document,spec.children.map(descend))
 
   def childElements = elementsOnly(children)
 
   // It would be more efficient to do the filtering prior to creating the Child to wrap the ChildSpec.  However,
-  // this way, we can keep reusing the same set of RootedChildren that we create over and over instead of having
+  // this way, we can keep reusing the same set of Child nodes that we create over and over instead of having
   // to create them anew for each call.  I think this is better.
   //
-  // NB: This could be turned into a val if we're going to use this often enough.
-  def descendants:Iterable[Child] =
+  // This could be turned into a val if we're going to use this often enough.
+  def descendants:Selection[Child] =
     children.flatMap( c => Iterable(c) ++ ( c match {
       case p:Parent => p.descendants
       case _ => Iterable.empty
@@ -65,10 +65,10 @@ class Parent private[sdom] (override val spec:ParentSpec[_],val parent:Option[Pa
 
   def descendantElements = elementsOnly(descendants)
 
-  override def \[T <: Child](selector:Selector[T]):Iterable[T] =
+  override def \[T <: Child](selector:Selector[T]):Selection[T] =
     children.flatMap(selector)
 
-  override def \\[T <: Child](selector:Selector[T]):Iterable[T] =
+  override def \\[T <: Child](selector:Selector[T]):Selection[T] =
     descendants.flatMap(selector)
 
   private[this] def descend(child:ChildSpec) = child match {
@@ -79,7 +79,7 @@ class Parent private[sdom] (override val spec:ParentSpec[_],val parent:Option[Pa
     case p:ProcessingInstructionSpec => ProcessingInstruction(p,Some(this))
   }
 
-  private[this] def elementsOnly(nodes:Iterable[Node]):Iterable[Element] =
+  private[this] def elementsOnly(nodes:Selection[Node]):Selection[Element] =
     nodes.filter(_.isInstanceOf[Element]).map(_.asInstanceOf[Element])
 }
 
@@ -91,14 +91,14 @@ object Parent {
 }
 
 case class Document(override val spec:DocumentSpec) extends Parent(spec,None) {
-  val root = Element(spec.childElements.head,Some(this))
+  lazy val root = childElements.head
 }
 
 object Document {
   def apply(children:Iterable[ChildSpec]):Document =
     Document(DocumentSpec(children))
   def apply(children:ChildSpec*):Document =
-    apply(children:_*)
+    apply(children)
   def apply(nodes:scala.xml.NodeSeq)(implicit strategy:Strategy = Strategies.Flexible):Document =
     apply(literalToChildSpecs(nodes))
 }
@@ -208,7 +208,7 @@ case class Element private[sdom] (override val spec:ElementSpec,override val par
     else
       Namespaces(parentScope,explicitNamespaces ++ implicitNamespaces)
 
-  val namespaces = {
+  val namespaces = Selection(document,{
     val explicitNamespaceNodes = explicitNamespaces map { ns =>
       Namespace(ns,true,Some(this))
     }
@@ -216,14 +216,14 @@ case class Element private[sdom] (override val spec:ElementSpec,override val par
       Namespace(ns,false,Some(this))
     }
     explicitNamespaceNodes ++ implicitNamespaceNodes
-  }
+  })
 
   // The scope should now have the optimal prefix for all the URIs that we need to represent.
 
   val prefix = scope.uriToPrefix(spec.name.uri)
 
-  val attributes:Iterable[Attribute] =
-    spec.attributes map { a =>
+  val attributes:Selection[Attribute] =
+    Selection(document,spec.attributes map { a =>
       // The empty prefix always means the empty URI for attributes (they don't use the default namespace).
       val prefix = a.prefix.getOrElse {
         a.name.uri match {
@@ -232,14 +232,14 @@ case class Element private[sdom] (override val spec:ElementSpec,override val par
         }
       }
       Attribute(a,prefix,Some(this))
-    }
+    })
 
   val text = spec.text
 
   val attributeMap:Map[AttributeName,Attribute] =
     attributes.map( a => a.spec.name -> a ).toMap
 
-  def \@(selector:Selector[Attribute]):Iterable[Attribute] =
+  override def \@(selector:Selector[Attribute]):Selection[Attribute] =
     attributes.flatMap(selector)
 }
 
@@ -282,28 +282,28 @@ case class Comment private[sdom] (override val spec:CommentSpec,parent:Option[Pa
 }
 
 private[sdom] trait ChildContainer {
-  def \[T <: Child](selector:Selector[T]):Iterable[T]
-  def \\[T <: Child](selector:Selector[T]):Iterable[T]
+  def \[T <: Child](selector:Selector[T]):Selection[T]
+  def \\[T <: Child](selector:Selector[T]):Selection[T]
 
   // I wanted to do the following with implicit conversions from String -> Selector[Element] but I can't
   // figure out how to make it so that it's non-ambiguous with respect to the implicit conversion from
   // String -> Selector[Attribute] that's needs for \@ below.
 
-  def \(name:ElementName):Iterable[Element] =
+  def \(name:ElementName):Selection[Element] =
     \[Element](Selector( _.name == name ))
 
-  def \\(name:ElementName):Iterable[Element] =
+  def \\(name:ElementName):Selection[Element] =
     \\[Element](Selector( _.name == name ))
 }
 
 private[sdom] trait AttributeContainer {
-  def \@(selector:Selector[Attribute]):Iterable[Attribute]
+  def \@(selector:Selector[Attribute]):Selection[Attribute]
 
   // I wanted to do the following with implicit conversions from String -> Selector[Attribute] but I can't
   // figure out how to make it so that it's non-ambiguous with respect to the implicit conversion from
   // String -> Selector[Element] that's needs for \ and \\ above.
 
-  def \@(name:AttributeName):Iterable[Attribute] =
+  def \@(name:AttributeName):Selection[Attribute] =
     \@(Selector[Attribute]( _.name == name ))
 }
 

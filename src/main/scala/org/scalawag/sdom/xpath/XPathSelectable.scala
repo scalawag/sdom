@@ -3,28 +3,28 @@ package org.scalawag.sdom.xpath
 import org.scalawag.sdom._
 
 trait XPathSelectable {
-  def %<(xpathExpression:String)(implicit namespaces:NamespacesLike = Namespaces.Empty):Iterable[Element] =
+  def %<(xpathExpression:String)(implicit namespaces:NamespacesLike = Namespaces.Empty):Selection[Element] =
     %<(XPath.elements(xpathExpression))
 
-  def %<(expr:XPath[Element]):Iterable[Element] =
+  def %<(expr:XPath[Element]):Selection[Element] =
     %(expr).map(_.asInstanceOf[Element])
 
-  def %@(xpathExpression:String)(implicit namespaces:NamespacesLike = Namespaces.Empty):Iterable[Attribute] =
+  def %@(xpathExpression:String)(implicit namespaces:NamespacesLike = Namespaces.Empty):Selection[Attribute] =
     %@(XPath.attributes(xpathExpression))
 
-  def %@(expr:XPath[Attribute]):Iterable[Attribute] =
+  def %@(expr:XPath[Attribute]):Selection[Attribute] =
     %(expr).map(_.asInstanceOf[Attribute])
 
-  def %%(xpathExpression:String)(implicit namespaces:NamespacesLike = Namespaces.Empty):Iterable[Node] =
+  def %%(xpathExpression:String)(implicit namespaces:NamespacesLike = Namespaces.Empty):Selection[Node] =
     %%(XPath.nodes(xpathExpression))
 
-  def %%(expr:XPath[Node]):Iterable[Node] =
+  def %%(expr:XPath[Node]):Selection[Node] =
     %(expr).map(_.asInstanceOf[Node])
 
-  def %(xpathExpression:String)(implicit namespaces:NamespacesLike = Namespaces.Empty):Iterable[Any] =
+  def %(xpathExpression:String)(implicit namespaces:NamespacesLike = Namespaces.Empty):Selection[Any] =
     %(XPath(xpathExpression))
 
-  def %[T](expr:XPath[T]):Iterable[T]
+  def %[T](expr:XPath[T]):Selection[T]
 }
 
 /* sdom -- Copyright 2014 Justin Patterson -- All Rights Reserved */

@@ -169,7 +169,7 @@ class ScalaXmlConversionsTest extends FunSpec with Matchers {
     }
 
     it("convert to literal") {
-      val x:Elem = Element(sdom,None).toElem
+      val x = Document(sdom).root.toElem
       x shouldBe literal
     }
   }

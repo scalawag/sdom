@@ -32,22 +32,22 @@ trait Transformers { self =>
       NodeReplacer.transform(namespace,fn)
   }
 
-  implicit class ChildrenTransformer(children:Iterable[Child]) extends Transformer[Child,ChildSpec] {
+  implicit class ChildrenTransformer(children:Selection[Child]) extends Transformer[Child,ChildSpec] {
     override def transform(fn:PartialFunction[Child,Iterable[ChildSpec]]):Document =
       NodeReplacer.transformChildren(children,fn)
   }
 
-  implicit class AttributesTransformer(attributes:Iterable[Attribute]) extends Transformer[Attribute,AttributeSpec] {
+  implicit class AttributesTransformer(attributes:Selection[Attribute]) extends Transformer[Attribute,AttributeSpec] {
     override def transform(fn:PartialFunction[Attribute,Iterable[AttributeSpec]]):Document =
       NodeReplacer.transformAttributes(attributes,fn)
   }
 
-  implicit class NamespacesTransformer(namespaces:Iterable[Namespace]) extends Transformer[Namespace,NamespaceSpec] {
+  implicit class NamespacesTransformer(namespaces:Selection[Namespace]) extends Transformer[Namespace,NamespaceSpec] {
     override def transform(fn:PartialFunction[Namespace,Iterable[NamespaceSpec]]):Document =
       NodeReplacer.transformNamespaces(namespaces,fn)
   }
 
-  implicit class NodesTransformer(nodes:Iterable[Node]) extends Transformer[Node,NodeSpec] {
+  implicit class NodesTransformer(nodes:Selection[Node]) extends Transformer[Node,NodeSpec] {
     override def transform(fn:PartialFunction[Node,Iterable[NodeSpec]]):Document =
       NodeReplacer.transformNodes(nodes,fn)
   }

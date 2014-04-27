@@ -7,12 +7,12 @@ import org.scalawag.sdom._
 trait XPathImplicits {
 
   implicit class NodeXPathSelector(node:Node)(implicit namespaces:NamespacesLike = Namespaces.Empty) extends XPathSelectable {
-    override def %[T](expr:XPath[T]):Iterable[T] =
-      expr.evaluate(node)
+    override def %[T](expr:XPath[T]):Selection[T] =
+      Selection(node.document,expr.evaluate(node))
   }
 
-  implicit class NodesXPathSelector(nodes:Iterable[Node])(implicit namespaces:NamespacesLike = Namespaces.Empty) extends XPathSelectable {
-    override def %[T](expr:XPath[T]):Iterable[T] =
+  implicit class NodesXPathSelector(nodes:Selection[Node])(implicit namespaces:NamespacesLike = Namespaces.Empty) extends XPathSelectable {
+    override def %[T](expr:XPath[T]):Selection[T] =
       nodes.flatMap( _ % expr )
   }
 

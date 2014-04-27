@@ -6,6 +6,14 @@ import Implicits._
 
 class ElementsTest extends FunSuite with Matchers {
 
+  test("grab children from non-operator descent") {
+    val x = XML.parse("""<a><b><x/></b><b><y/></b><c><z/></c></a>""")
+    val results = ( x.childElements \ "b" \ "y" ).toSeq
+    results.size shouldBe 1
+    val b = results.head
+    b.name shouldBe ElementName("y")
+  }
+
   test("grab children") {
     val x = XML.parse("""<a><b><x/></b><b><y/></b><c><z/></c></a>""")
     val results = ( x \ "b" \ "y" ).toSeq

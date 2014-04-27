@@ -9,7 +9,7 @@ import org.scalawag.sdom.Element
 // Similar to jaxen's XPath except that this one is more type-safe because it's specifically limited to
 // handling contexts that are Nodes.
 
-class XPath[T](xpath:SdomXPath) {
+class XPath[+T](xpath:SdomXPath) {
   def evaluate(context:Node):Iterable[T] = {
     xpath.evaluate(context) match {
       case l:java.util.List[_] =>
