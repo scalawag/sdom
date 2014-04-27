@@ -78,12 +78,11 @@ private[sdom] object NodeReplacer {
   // Handles the common behavior of doing nothing when the resulting transformation is either not supported for this
   // instance or returns the same instance (or an Iterable containing only this instance).
 
-  def calculateReplacementsInternal[N <: NodeSpec](r:Node,fn:PartialFunction[N,Iterable[N]])(onDifferent:Iterable[N] => Replacements):Replacements = {
-    val node = r.spec.asInstanceOf[N]
+  def calculateReplacementsInternal[A <: Node,B <: NodeSpec](node:A,fn:PartialFunction[A,Iterable[B]])(onDifferent:Iterable[B] => Replacements):Replacements = {
     if ( fn.isDefinedAt(node) ) {
       val transformed = fn(node)
       // Don't be fooled by the same spec returned in an Iterable...
-      if ( transformed.size != 1 || transformed.head != node ) {
+      if ( transformed.size != 1 || transformed.head != node.spec ) {
         onDifferent(transformed)
       } else {
         Replacements.empty
@@ -93,11 +92,10 @@ private[sdom] object NodeReplacer {
     }
   }
 
-  private[sdom] def calculateReplacements(document:Document,fn:PartialFunction[DocumentSpec,DocumentSpec]):Replacements = {
-    val node = document.spec.asInstanceOf[DocumentSpec]
-    if ( fn.isDefinedAt(node) ) {
-      val transformed = fn(node)
-      if ( transformed != node ) {
+  private[sdom] def calculateReplacements(document:Document,fn:PartialFunction[Document,DocumentSpec]):Replacements = {
+    if ( fn.isDefinedAt(document) ) {
+      val transformed = fn(document)
+      if ( transformed != document.spec ) {
         Replacements(documents = Map(document -> transformed))
       } else {
         Replacements.empty
@@ -107,34 +105,33 @@ private[sdom] object NodeReplacer {
     }
   }
 
-  private[this] def calculateReplacements(child:Child,fn:PartialFunction[ChildSpec,Iterable[ChildSpec]]):Replacements =
+  private[this] def calculateReplacements(child:Child,fn:PartialFunction[Child,Iterable[ChildSpec]]):Replacements =
     calculateReplacementsInternal(child,fn) { transformed =>
       Replacements(children = Map(child -> transformed))
     }
 
-  private[this] def calculateReplacements(attribute:Attribute,fn:PartialFunction[AttributeSpec,Iterable[AttributeSpec]]):Replacements =
+  private[this] def calculateReplacements(attribute:Attribute,fn:PartialFunction[Attribute,Iterable[AttributeSpec]]):Replacements =
     calculateReplacementsInternal(attribute,fn) { transformed =>
       Replacements(attributes = Map(attribute -> transformed))
     }
 
-  private[this] def calculateReplacements(namespace:Namespace,fn:PartialFunction[NamespaceSpec,Iterable[NamespaceSpec]]):Replacements =
+  private[this] def calculateReplacements(namespace:Namespace,fn:PartialFunction[Namespace,Iterable[NamespaceSpec]]):Replacements =
     calculateReplacementsInternal(namespace,fn) { transformed =>
       Replacements(namespaces = Map(namespace -> transformed))
     }
 
-  private[this] def calculateReplacements(rootedNode:Node,fn:PartialFunction[NodeSpec,Iterable[NodeSpec]]):Replacements = {
-    def buildReplacement[T <: NodeSpec](targetClass:Class[T]):Iterable[T] = {
-      val node = rootedNode.spec
+  private[this] def calculateReplacements(node:Node,fn:PartialFunction[Node,Iterable[NodeSpec]]):Replacements = {
+    def buildReplacement[A <: Node,B <: NodeSpec](targetClass:Class[B]):Iterable[B] = {
       if ( fn.isDefinedAt(node) ) {
         val transformed = fn(node)
         // Don't be fooled by the same spec returned in an Iterable...
-        if ( transformed.size != 1 || transformed.head != node ) {
+        if ( transformed.size != 1 || transformed.head != node.spec ) {
           // Check to make sure the replacements are valid for the type being replaced...
           transformed foreach { r =>
             if ( ! targetClass.isAssignableFrom(r.getClass) )
-              throw new IllegalArgumentException(s"Nodes of type ${rootedNode.getClass} can only be transformed into nodes of type ${targetClass} yet one was transformed into a ${r.getClass}: $rootedNode -> $r")
+              throw new IllegalArgumentException(s"Nodes of type ${node.getClass} can only be transformed into specs of type ${targetClass} yet one was transformed into type '${r.getClass}': $node -> $r")
           }
-          transformed.asInstanceOf[Iterable[T]]
+          transformed.asInstanceOf[Iterable[B]]
         } else {
           Iterable.empty
         }
@@ -143,7 +140,7 @@ private[sdom] object NodeReplacer {
       }
     }
 
-    rootedNode match {
+    node match {
       case d:Document =>
         val replacements = buildReplacement(classOf[DocumentSpec])
         if ( replacements.size != 1 )
@@ -158,47 +155,47 @@ private[sdom] object NodeReplacer {
     }
   }
 
-  def transform(document:Document,fn:PartialFunction[DocumentSpec,DocumentSpec]) = {
+  def transform(document:Document,fn:PartialFunction[Document,DocumentSpec]) = {
     val replacements = calculateReplacements(document,fn)
     NodeReplacer.rebuildTree(document,replacements)
   }
 
-  def transform(child:Child,fn:PartialFunction[ChildSpec,Iterable[ChildSpec]]) = {
+  def transform(child:Child,fn:PartialFunction[Child,Iterable[ChildSpec]]) = {
     val replacements = calculateReplacements(child,fn)
     NodeReplacer.rebuildTree(child,replacements)
   }
 
-  def transform(attribute:Attribute,fn:PartialFunction[AttributeSpec,Iterable[AttributeSpec]]) = {
+  def transform(attribute:Attribute,fn:PartialFunction[Attribute,Iterable[AttributeSpec]]) = {
     val replacements = calculateReplacements(attribute,fn)
     NodeReplacer.rebuildTree(attribute,replacements)
   }
 
-  def transform(namespace:Namespace,fn:PartialFunction[NamespaceSpec,Iterable[NamespaceSpec]]) = {
+  def transform(namespace:Namespace,fn:PartialFunction[Namespace,Iterable[NamespaceSpec]]) = {
     val replacements = calculateReplacements(namespace,fn)
     NodeReplacer.rebuildTree(namespace,replacements)
   }
 
-  def transform(node:Node,fn:PartialFunction[NodeSpec,Iterable[NodeSpec]]) = {
+  def transform(node:Node,fn:PartialFunction[Node,Iterable[NodeSpec]]) = {
     val replacements = calculateReplacements(node,fn)
     NodeReplacer.rebuildTree(node,replacements)
   }
 
-  def transformChildren(children:Iterable[Child],fn:PartialFunction[ChildSpec,Iterable[ChildSpec]]) = {
+  def transformChildren(children:Iterable[Child],fn:PartialFunction[Child,Iterable[ChildSpec]]) = {
     val replacements = children.map(calculateReplacements(_,fn)).reduceLeft(_ + _)
     NodeReplacer.rebuildTree(children.head,replacements)
   }
 
-  def transformAttributes(attributes:Iterable[Attribute],fn:PartialFunction[AttributeSpec,Iterable[AttributeSpec]]) = {
+  def transformAttributes(attributes:Iterable[Attribute],fn:PartialFunction[Attribute,Iterable[AttributeSpec]]) = {
     val replacements = attributes.map(calculateReplacements(_,fn)).reduceLeft(_ + _)
     NodeReplacer.rebuildTree(attributes.head,replacements)
   }
 
-  def transformNamespaces(namespaces:Iterable[Namespace],fn:PartialFunction[NamespaceSpec,Iterable[NamespaceSpec]]) = {
+  def transformNamespaces(namespaces:Iterable[Namespace],fn:PartialFunction[Namespace,Iterable[NamespaceSpec]]) = {
     val replacements = namespaces.map(calculateReplacements(_,fn)).reduceLeft(_ + _)
     NodeReplacer.rebuildTree(namespaces.head,replacements)
   }
 
-  def transformNodes(nodes:Iterable[Node],fn:PartialFunction[NodeSpec,Iterable[NodeSpec]]) = {
+  def transformNodes(nodes:Iterable[Node],fn:PartialFunction[Node,Iterable[NodeSpec]]) = {
     val replacements = nodes.map(calculateReplacements(_,fn)).reduceLeft(_ + _)
     NodeReplacer.rebuildTree(nodes.head,replacements)
   }

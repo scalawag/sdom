@@ -11,60 +11,60 @@ import org.scalawag.sdom.NamespaceSpec
 
 trait Transformers { self =>
 
-  trait Transformer[T] {
-    def transform(fn:PartialFunction[T,Iterable[T]]):Document
+  trait Transformer[A <: Node,B <: NodeSpec] {
+    def transform(fn:PartialFunction[A,Iterable[B]]):Document
 
     def remove = transform(self.remove)
   }
 
-  implicit class ChildTransformer(child:Child) extends Transformer[ChildSpec] {
-    def transform(fn:PartialFunction[ChildSpec,Iterable[ChildSpec]]):Document =
+  implicit class ChildTransformer(child:Child) extends Transformer[Child,ChildSpec] {
+    override def transform(fn:PartialFunction[Child,Iterable[ChildSpec]]):Document =
       NodeReplacer.transform(child,fn)
   }
 
-  implicit class AttributeTransformer(attribute:Attribute) extends Transformer[AttributeSpec] {
-    def transform(fn:PartialFunction[AttributeSpec,Iterable[AttributeSpec]]):Document =
+  implicit class AttributeTransformer(attribute:Attribute) extends Transformer[Attribute,AttributeSpec] {
+    override def transform(fn:PartialFunction[Attribute,Iterable[AttributeSpec]]):Document =
       NodeReplacer.transform(attribute,fn)
   }
 
-  implicit class NamespaceTransformer(namespace:Namespace) extends Transformer[NamespaceSpec] {
-    def transform(fn:PartialFunction[NamespaceSpec,Iterable[NamespaceSpec]]):Document =
+  implicit class NamespaceTransformer(namespace:Namespace) extends Transformer[Namespace,NamespaceSpec] {
+    override def transform(fn:PartialFunction[Namespace,Iterable[NamespaceSpec]]):Document =
       NodeReplacer.transform(namespace,fn)
   }
 
-  implicit class ChildrenTransformer(children:Iterable[Child]) extends Transformer[ChildSpec] {
-    def transform(fn:PartialFunction[ChildSpec,Iterable[ChildSpec]]):Document =
+  implicit class ChildrenTransformer(children:Iterable[Child]) extends Transformer[Child,ChildSpec] {
+    override def transform(fn:PartialFunction[Child,Iterable[ChildSpec]]):Document =
       NodeReplacer.transformChildren(children,fn)
   }
 
-  implicit class AttributesTransformer(attributes:Iterable[Attribute]) extends Transformer[AttributeSpec] {
-    def transform(fn:PartialFunction[AttributeSpec,Iterable[AttributeSpec]]):Document =
+  implicit class AttributesTransformer(attributes:Iterable[Attribute]) extends Transformer[Attribute,AttributeSpec] {
+    override def transform(fn:PartialFunction[Attribute,Iterable[AttributeSpec]]):Document =
       NodeReplacer.transformAttributes(attributes,fn)
   }
 
-  implicit class NamespacesTransformer(namespaces:Iterable[Namespace]) extends Transformer[NamespaceSpec] {
-    def transform(fn:PartialFunction[NamespaceSpec,Iterable[NamespaceSpec]]):Document =
+  implicit class NamespacesTransformer(namespaces:Iterable[Namespace]) extends Transformer[Namespace,NamespaceSpec] {
+    override def transform(fn:PartialFunction[Namespace,Iterable[NamespaceSpec]]):Document =
       NodeReplacer.transformNamespaces(namespaces,fn)
   }
 
-  implicit class NodesTransformer(nodes:Iterable[Node]) extends Transformer[NodeSpec] {
-    def transform(fn:PartialFunction[NodeSpec,Iterable[NodeSpec]]):Document =
+  implicit class NodesTransformer(nodes:Iterable[Node]) extends Transformer[Node,NodeSpec] {
+    override def transform(fn:PartialFunction[Node,Iterable[NodeSpec]]):Document =
       NodeReplacer.transformNodes(nodes,fn)
   }
 
   def remove[T]:PartialFunction[T,Iterable[Nothing]] = { case _ => Iterable.empty }
 
-  def oneToOne[T](fn:T => T):PartialFunction[T,Iterable[T]] = { case t => Iterable(fn(t)) }
+  def oneToOne[A,B](fn:A => B):PartialFunction[A,Iterable[B]] = { case a => Iterable(fn(a)) }
 
-  def add(a:AttributeSpec):PartialFunction[ElementSpec,Iterable[ElementSpec]] =
-    oneToOne( e => e.copy(attributes = e.attributes ++ Iterable(a) ))
+  def add(a:AttributeSpec):PartialFunction[Element,Iterable[ElementSpec]] =
+    oneToOne( e => e.spec.copy(attributes = e.spec.attributes ++ Iterable(a) ))
 
-  def mapChildren(fn:Iterable[ChildSpec] => Iterable[ChildSpec]):PartialFunction[ChildSpec,Iterable[ChildSpec]] = {
-    case p:ElementSpec => Iterable(p.copy(children = fn(p.children)))
+  def mapChildren(fn:Iterable[Child] => Iterable[ChildSpec]):PartialFunction[Child,Iterable[ChildSpec]] = {
+    case p:Element => Iterable(p.spec.copy(children = fn(p.children)))
   }
 
-  def append(c:ChildSpec):PartialFunction[ChildSpec,Iterable[ChildSpec]] = mapChildren(_ ++ Iterable(c))
-  def prepend(c:ChildSpec):PartialFunction[ChildSpec,Iterable[ChildSpec]] = mapChildren(Iterable(c) ++ _)
+  def append(c:ChildSpec):PartialFunction[Child,Iterable[ChildSpec]] = mapChildren(_.map(_.spec) ++ Iterable(c))
+  def prepend(c:ChildSpec):PartialFunction[Child,Iterable[ChildSpec]] = mapChildren(Iterable(c) ++ _.map(_.spec))
 }
 
 /* sdom -- Copyright 2014 Justin Patterson -- All Rights Reserved */
