@@ -5,8 +5,6 @@ import org.scalawag.sdom._
 
 class TransformersTest extends FunSpec with Matchers {
 
-// replace child with any other child
-// transform empty result set
   describe("transform") {
     it("should do nothing when the Iterable is empty") {
       val x = Document(<a><b><c/></b><b><d/></b></a>)
@@ -14,6 +12,15 @@ class TransformersTest extends FunSpec with Matchers {
       val t = ( x \ "z" ) transform append(<e/>)
 
       t shouldEqual x
+    }
+
+    it("should allow replacing a Child with any other Child") {
+      val x = Document(<a><b>1</b><b><!-- blah --></b><b><d/></b><b><?pi details?></b></a>)
+
+      // Replace <b/> elements with their own children
+      val t = ( x \\ "b" ) transform { case e:Element => e.spec.children }
+
+      t shouldEqual Document(<a>1<!-- blah --><d/><?pi details?></a>)
     }
   }
 

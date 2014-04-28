@@ -43,7 +43,7 @@ class AttributeNameTest extends FunSuite with Matchers {
     AttributeName("a") should be (AttributeName("a"))
   }
 
-  test("parse name with no prefix") {
+  test("parse name with no prefix (ignore default namespace)") {
     implicit val namespaces = Namespaces("" -> "B")
     AttributeName("a") should be (AttributeName("a",""))
   }
