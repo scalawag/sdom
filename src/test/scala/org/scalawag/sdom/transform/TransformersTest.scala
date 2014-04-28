@@ -34,4 +34,14 @@ class TransformersTest extends FunSpec with Matchers {
     }
   }
 
+  describe("transform XPath results") {
+    it("remove elements returned") {
+      val x = Document(<a><b id="1"/><b id="2"><c>8</c></b><d><b id="3"/></d></a>)
+
+      val t = ( x %< "//b" ) transform remove
+
+      t.asString shouldEqual Document(<a><d/></a>).asString
+    }
+  }
+
 }
