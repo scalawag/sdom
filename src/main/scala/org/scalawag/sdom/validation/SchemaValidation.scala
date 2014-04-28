@@ -26,9 +26,9 @@ trait SchemaValidation {
 
       var lastNodeVisited:Node = null
 
-      def helper(node:Node):Unit = {
-        lastNodeVisited = node
-        node match {
+      def helper(child:Child):Unit = {
+        lastNodeVisited = child
+        child match {
           case e:Element =>
 
             val namespaces = e.namespaces

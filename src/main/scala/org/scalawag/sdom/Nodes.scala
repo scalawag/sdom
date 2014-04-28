@@ -15,7 +15,7 @@ import org.scalawag.sdom.ScalaXmlConversions.{Strategies,Strategy}
 // it while still allowing the NodeSpec itself to remain immutable.  This means that you can only navigate upward once
 // you have descended but this isn't really much of a restriction in practice.
 
-abstract class Node {
+sealed abstract class Node {
   val parent:Option[Parent]
   lazy val document:Document = parent.map(_.document).getOrElse(this.asInstanceOf[Document])
   val spec:NodeSpec
@@ -35,17 +35,17 @@ abstract class Node {
   override lazy val toString = s"${this.getClass.getSimpleName}($asString)"
 }
 
-trait Child extends Node {
+sealed trait Child extends Node {
   override val spec:ChildSpec
 }
 
-trait Named extends Node {
+sealed trait Named extends Node {
   override val spec:NamedSpec[_] // narrows the parent's definition
   val name = spec.name
   val prefix:String
 }
 
-class Parent private[sdom] (override val spec:ParentSpec[_],val parent:Option[Parent]) extends Node with ChildContainer {
+sealed abstract class Parent private[sdom] (override val spec:ParentSpec[_],val parent:Option[Parent]) extends Node with ChildContainer {
   val scope:NamespacesLike = Namespaces.Empty
 
   lazy val children:Selection[Child] = Selection(document,spec.children.map(descend))
@@ -256,7 +256,7 @@ case class Namespace private[sdom] (override val spec:NamespaceSpec,explicit:Boo
   val uri = spec.uri
 }
 
-abstract class TextLike private[sdom] (override val spec:TextLikeSpec,parent:Option[Parent])
+sealed abstract class TextLike private[sdom] (override val spec:TextLikeSpec,parent:Option[Parent])
   extends Node with Child
 {
   val text = spec.text
