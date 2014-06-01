@@ -32,16 +32,23 @@ object PrettyPrintOutputter extends Outputter {
           helper(a,"")
         }
 
-        if ( e.children.isEmpty ) {
+        // Remove whitespace-only children
+        val children = e.children.filter( c => ! c.isInstanceOf[TextLike] || ! c.asInstanceOf[TextLike].text.trim.isEmpty )
+
+        if ( children.isEmpty ) {
           pw.write("/>")
         } else {
           pw.write('>')
-          e.children.foreach { c =>
+          if ( children.forall(_.isInstanceOf[TextLike]) ) {
+            children.foreach(helper(_))
+          } else {
+            children.foreach { c =>
+              pw.println()
+              helper(c, indent + "  ")
+            }
             pw.println()
-            helper(c,indent + "  ")
+            pw.print(indent)
           }
-          pw.println()
-          pw.print(indent)
           pw.write("</")
           pw.write(qn)
           pw.write('>')
@@ -67,7 +74,7 @@ object PrettyPrintOutputter extends Outputter {
 
       case t:Text =>
         pw.write(indent)
-        pw.write(escape(t.text))
+        pw.write(escape(t.text.trim))
 
       case c:CData =>
         pw.write(indent)
