@@ -31,8 +31,8 @@ sealed abstract class Node {
     helper(this,Iterable.empty)
   }
 
-  lazy val asString = DefaultOutputter.output(this)
-  override lazy val toString = s"${this.getClass.getSimpleName}($asString)"
+  lazy val serialize = DefaultOutputter.output(this)
+  override lazy val toString = s"${this.getClass.getSimpleName}($serialize)"
 }
 
 sealed trait Child extends Node {

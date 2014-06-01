@@ -30,7 +30,7 @@ class TransformersTest extends FunSpec with Matchers {
 
       val t = ( x \\ "b" ) transform append(<e/>)
 
-      t.asString shouldEqual Document(<a><b><c/><e/></b><b><d/><e/></b></a>).asString
+      t.serialize shouldEqual Document(<a><b><c/><e/></b><b><d/><e/></b></a>).serialize
     }
   }
 
@@ -40,7 +40,7 @@ class TransformersTest extends FunSpec with Matchers {
 
       val t = ( x %< "//b" ) transform remove
 
-      t.asString shouldEqual Document(<a><d/></a>).asString
+      t.serialize shouldEqual Document(<a><d/></a>).serialize
     }
   }
 
