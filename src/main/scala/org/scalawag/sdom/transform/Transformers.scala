@@ -17,6 +17,28 @@ trait Transformers { self =>
     def remove = transform(self.remove)
   }
 
+  trait MultiTransformer[A <: Node,B <: NodeSpec] extends Transformer[A,B]{
+    val nodes: Selection[A]
+
+    /** This is the same as transform() except that it throws an exception if there is not at least one
+      * Node in the Selection.
+      */
+
+    def transformSome(fn: PartialFunction[A,Iterable[B]]): Document = {
+      require(nodes.size > 0,"transformation requires at least one node")
+      transform(fn)
+    }
+
+    /** This is the same as transform() except that it throws an exception if there is not exactly one
+      * Node in the Selection.
+      */
+
+    def transformOne(fn: PartialFunction[A,Iterable[B]]): Document = {
+      require(nodes.size == 1,"transformation requires exactly one node")
+      transform(fn)
+    }
+  }
+
   implicit class ChildTransformer(child:Child) extends Transformer[Child,ChildSpec] {
     override def transform(fn:PartialFunction[Child,Iterable[ChildSpec]]):Document =
       NodeReplacer.transform(child,fn)
@@ -32,22 +54,22 @@ trait Transformers { self =>
       NodeReplacer.transform(namespace,fn)
   }
 
-  implicit class ChildrenTransformer(children:Selection[Child]) extends Transformer[Child,ChildSpec] {
+  implicit class ChildrenTransformer(override val nodes:Selection[Child]) extends MultiTransformer[Child,ChildSpec] {
     override def transform(fn:PartialFunction[Child,Iterable[ChildSpec]]):Document =
-      NodeReplacer.transformChildren(children,fn)
+      NodeReplacer.transformChildren(nodes,fn)
   }
 
-  implicit class AttributesTransformer(attributes:Selection[Attribute]) extends Transformer[Attribute,AttributeSpec] {
+  implicit class AttributesTransformer(override val nodes:Selection[Attribute]) extends MultiTransformer[Attribute,AttributeSpec] {
     override def transform(fn:PartialFunction[Attribute,Iterable[AttributeSpec]]):Document =
-      NodeReplacer.transformAttributes(attributes,fn)
+      NodeReplacer.transformAttributes(nodes,fn)
   }
 
-  implicit class NamespacesTransformer(namespaces:Selection[Namespace]) extends Transformer[Namespace,NamespaceSpec] {
+  implicit class NamespacesTransformer(override val nodes:Selection[Namespace]) extends MultiTransformer[Namespace,NamespaceSpec] {
     override def transform(fn:PartialFunction[Namespace,Iterable[NamespaceSpec]]):Document =
-      NodeReplacer.transformNamespaces(namespaces,fn)
+      NodeReplacer.transformNamespaces(nodes,fn)
   }
 
-  implicit class NodesTransformer(nodes:Selection[Node]) extends Transformer[Node,NodeSpec] {
+  implicit class NodesTransformer(override val nodes:Selection[Node]) extends MultiTransformer[Node,NodeSpec] {
     override def transform(fn:PartialFunction[Node,Iterable[NodeSpec]]):Document =
       NodeReplacer.transformNodes(nodes,fn)
   }

@@ -44,4 +44,56 @@ class TransformersTest extends FunSpec with Matchers {
     }
   }
 
+  describe("transformSome") {
+    it("require at least one node to transform") {
+      val x = Document(<a><b id="1"/><b id="2"><c>8</c></b><d><b id="3"/></d></a>)
+
+      val t = ( x %< "//b" ) transformSome remove
+
+      t.serialize shouldEqual Document(<a><d/></a>).serialize
+    }
+
+    it("one node to transform is acceptable") {
+      val x = Document(<a><b id="1"/><b id="2"><c>8</c></b><d><b id="3"/></d></a>)
+
+      val t = ( x %< "//d" ) transformSome remove
+
+      t.serialize shouldEqual Document(<a><b id="1"/><b id="2"><c>8</c></b></a>).serialize
+    }
+
+    it("zero nodes is unacceptable") {
+      val x = Document(<a><b id="1"/><b id="2"><c>8</c></b><d><b id="3"/></d></a>)
+
+      intercept[IllegalArgumentException] {
+        (x %< "//e") transformSome remove
+      }
+    }
+  }
+
+  describe("transformOne") {
+    it("one node to transform is acceptable") {
+      val x = Document(<a><b id="1"/><b id="2"><c>8</c></b><d><b id="3"/></d></a>)
+
+      val t = ( x %< "//d" ) transformOne remove
+
+      t.serialize shouldEqual Document(<a><b id="1"/><b id="2"><c>8</c></b></a>).serialize
+    }
+
+    it("zero nodes is unacceptable") {
+      val x = Document(<a><b id="1"/><b id="2"><c>8</c></b><d><b id="3"/></d></a>)
+
+      intercept[IllegalArgumentException] {
+        (x %< "//e") transformOne remove
+      }
+    }
+
+    it("more than one node to transform is unacceptable") {
+      val x = Document(<a><b id="1"/><b id="2"><c>8</c></b><d><b id="3"/></d></a>)
+
+      intercept[IllegalArgumentException] {
+        (x %< "//b") transformOne remove
+      }
+    }
+
+  }
 }
