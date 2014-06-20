@@ -25,7 +25,7 @@ trait Transformers { self =>
       */
 
     def transformSome(fn: PartialFunction[A,Iterable[B]]): Document = {
-      require(nodes.size > 0,"transformation requires at least one node")
+      require(nodes.size > 0,"transformation requires at least one node, received none")
       transform(fn)
     }
 
@@ -34,7 +34,7 @@ trait Transformers { self =>
       */
 
     def transformOne(fn: PartialFunction[A,Iterable[B]]): Document = {
-      require(nodes.size == 1,"transformation requires exactly one node")
+      require(nodes.size == 1,s"transformation requires exactly one node, received ${nodes.size} nodes")
       transform(fn)
     }
   }
