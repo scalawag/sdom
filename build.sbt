@@ -1,12 +1,13 @@
 import de.johoop.jacoco4sbt._
 import JacocoPlugin._
 import com.typesafe.sbt.osgi.SbtOsgi.OsgiKeys._
+import org.scalawag.sbt.gitflow.GitFlow
 
 organization := "org.scalawag.sdom"
 
 name := "sdom"
 
-version := "0.1-SNAPSHOT"
+version := GitFlow.WorkingDir.version.toString
 
 // When I put this at 2.10.0, the tests can't find the scala classes (ever since upgrading to sbt 0.13.0)
 scalaVersion := "2.10.2"
