@@ -19,7 +19,7 @@ crossPaths := false
 resolvers += "sonatype-oss-snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
 
 libraryDependencies ++= Seq(
-  "jaxen" % "jaxen" % "1.1.4",
+  "org.apache.servicemix.bundles" % "org.apache.servicemix.bundles.jaxen" % "1.1.4_2",
   "org.scalatest" %% "scalatest" % "2.1.0" % "test",
   "org.mockito" % "mockito-all" % "1.9.5" % "test"
 )
