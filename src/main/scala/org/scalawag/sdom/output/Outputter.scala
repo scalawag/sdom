@@ -3,6 +3,14 @@ package org.scalawag.sdom.output
 import org.scalawag.sdom.{Named, Node}
 import java.io.{StringWriter, Writer}
 
+object Outputter {
+  def qname(n:Named) =
+    if ( ! n.prefix.isEmpty )
+      s"${n.prefix}:${n.name.localName}"
+    else
+      n.name.localName
+}
+
 trait Outputter {
   def output(node:Node,writer:Writer)
 
@@ -11,12 +19,6 @@ trait Outputter {
     output(node,out)
     out.toString
   }
-
-  protected[this] def qname(n:Named) =
-    if ( ! n.prefix.isEmpty )
-      s"${n.prefix}:${n.name.localName}"
-    else
-      n.name.localName
 }
 
 /* sdom -- Copyright 2014 Justin Patterson -- All Rights Reserved */
