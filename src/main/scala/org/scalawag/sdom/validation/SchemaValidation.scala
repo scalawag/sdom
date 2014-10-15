@@ -1,9 +1,14 @@
 package org.scalawag.sdom.validation
 
+import java.io.StringWriter
+
 import org.scalawag.sdom._
-import javax.xml.validation.{ValidatorHandler, Schema}
+import javax.xml.validation.Schema
+import org.scalawag.sdom.output.ContextOutputter
 import org.xml.sax.helpers.AttributesImpl
 import org.xml.sax.SAXParseException
+
+import scala.collection.immutable.Stack
 
 trait SchemaValidation {
   implicit class SchemaValidator(xml:Element) {
@@ -24,10 +29,14 @@ trait SchemaValidation {
        * actually parsing from a stream, this is about the best we can do.
        */
 
-      var lastNodeVisited:Node = null
+      // What we were processing when the validation exception was thrown.
+      var validationContext = Stack.empty[Node]
+
+      // This flag lets us know if the error happened on the end tag or the start tag.
+      var endTag = false
 
       def helper(child:Child):Unit = {
-        lastNodeVisited = child
+        validationContext = validationContext.push(child)
         child match {
           case e:Element =>
 
@@ -54,7 +63,10 @@ trait SchemaValidation {
 
             validator.startElement(uri,localName,qname,attributes)
             e.children.foreach(helper)
+
+            endTag = true
             validator.endElement(uri,localName,qname)
+            endTag = false
 
             namespaces foreach { ns =>
               validator.endPrefixMapping(ns.prefix)
@@ -68,6 +80,7 @@ trait SchemaValidation {
 
           case c:Comment => // ignore
         }
+        validationContext = validationContext.pop
       }
 
       try {
@@ -76,16 +89,20 @@ trait SchemaValidation {
         validator.endDocument()
       } catch {
         case ex:SAXParseException =>
-          throw new ValidationException(ex,lastNodeVisited)
+          throw new ValidationException(ex,xml,ValidationContext(validationContext.head,endTag))
       }
     }
   }
 }
 
-case class ValidationException(cause:SAXParseException,context:Node) extends Exception {
-  override def getMessage = {
-    cause.getMessage + " at " + context.ancestry.mkString(" <- ")
-  }
+case class ValidationContext(node:Node,endTag:Boolean = false)
+
+case class ValidationException(cause:SAXParseException,xml:Element,context:ValidationContext) extends Exception {
+
+  override def getMessage =
+    cause.getMessage + ':' + System.getProperty("line.separator") + getXmlContext
+
+  def getXmlContext = ContextOutputter.outputValidationContext(xml,context)
 }
 
 /* sdom -- Copyright 2014 Justin Patterson -- All Rights Reserved */

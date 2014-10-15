@@ -5,6 +5,8 @@ import java.io.{PrintWriter, Writer}
 import scala.xml.Utility.escape
 
 object PrettyPrintOutputter extends Outputter {
+  import Outputter._
+
   override def output(node:Node,writer:Writer) = {
     val pw = new PrintWriter(writer)
 

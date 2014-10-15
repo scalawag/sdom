@@ -5,6 +5,8 @@ import java.io.Writer
 import scala.xml.Utility.escape
 
 object DefaultOutputter extends Outputter {
+  import Outputter._
+
   override def output(node:Node,writer:Writer) = node match {
     case d:Document =>
       // TODO: xml version, etc.
