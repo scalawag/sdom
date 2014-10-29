@@ -1,7 +1,6 @@
 package org.scalawag.sdom.output
 
 import org.scalawag.sdom._
-import java.io.Writer
 import org.scalawag.sdom.validation.ValidationContext
 
 import scala.xml.Utility.escape
