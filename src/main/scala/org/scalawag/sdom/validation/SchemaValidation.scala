@@ -64,7 +64,9 @@ trait SchemaValidation {
             validator.startElement(uri,localName,qname,attributes)
             e.children.foreach(helper)
 
-            endTag = true
+            // If this child is empty, there's no end tag and it can't be the context.
+            if ( ! e.children.isEmpty )
+              endTag = true
             validator.endElement(uri,localName,qname)
             endTag = false
 

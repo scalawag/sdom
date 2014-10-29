@@ -106,6 +106,21 @@ class ValidationErrorMessageTest extends FunSuite with Matchers {
       """.stripMargin.trim
   }
 
+  test("missing child element in empty element") {
+    val x = Document(
+<root xmlns="urn:org.scalawag.sdom:test"/>
+    ).root
+    val ex = intercept[ValidationException] {
+      x.validate(schema)
+    }
+
+    ex.xmlContext shouldBe
+      """
+        |<root xmlns="urn:org.scalawag.sdom:test"/>
+        |^
+      """.stripMargin.trim
+  }
+
   test("invalid child") {
     val x = Document(<root xmlns="urn:org.scalawag.sdom:test"><f>2</f></root>).root
     val ex = intercept[ValidationException] {
