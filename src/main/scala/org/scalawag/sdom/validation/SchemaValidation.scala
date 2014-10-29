@@ -89,7 +89,8 @@ trait SchemaValidation {
         validator.endDocument()
       } catch {
         case ex:SAXParseException =>
-          throw new ValidationException(ex,xml,ValidationContext(validationContext.head,endTag))
+          val xmlContext = ContextOutputter.outputValidationContext(xml,ValidationContext(validationContext.head,endTag))
+          throw ValidationException(ex,xmlContext)
       }
     }
   }
@@ -97,12 +98,11 @@ trait SchemaValidation {
 
 case class ValidationContext(node:Node,endTag:Boolean = false)
 
-case class ValidationException(cause:SAXParseException,xml:Element,context:ValidationContext) extends Exception {
+case class ValidationException(cause:SAXParseException,xmlContext:String) extends Exception {
 
   override def getMessage =
-    cause.getMessage + ':' + System.getProperty("line.separator") + getXmlContext
+    cause.getMessage + ":\n" + xmlContext
 
-  def getXmlContext = ContextOutputter.outputValidationContext(xml,context)
 }
 
 /* sdom -- Copyright 2014 Justin Patterson -- All Rights Reserved */

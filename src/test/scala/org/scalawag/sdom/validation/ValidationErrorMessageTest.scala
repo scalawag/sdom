@@ -33,7 +33,7 @@ class ValidationErrorMessageTest extends FunSuite with Matchers {
       x.validate(schema)
     }
 
-    ex.getXmlContext shouldBe
+    ex.xmlContext shouldBe
       """
         |<a b="1" ns1:c="2" xmlns="NS1" xmlns:ns1="NS2"/>
         |^
@@ -46,7 +46,7 @@ class ValidationErrorMessageTest extends FunSuite with Matchers {
       x.validate(schema)
     }
 
-    ex.getXmlContext shouldBe
+    ex.xmlContext shouldBe
       """
         |<root b="1" c="2" xmlns="urn:org.scalawag.sdom:test"/>
         |^
@@ -59,7 +59,7 @@ class ValidationErrorMessageTest extends FunSuite with Matchers {
       x.validate(schema)
     }
 
-    ex.getXmlContext shouldBe
+    ex.xmlContext shouldBe
       """
         |<root xmlns="urn:org.scalawag.sdom:test">something</root>
         |                                                  ^
@@ -72,7 +72,7 @@ class ValidationErrorMessageTest extends FunSuite with Matchers {
       x.validate(schema)
     }
 
-    ex.getXmlContext shouldBe
+    ex.xmlContext shouldBe
       """
         |<root xmlns="urn:org.scalawag.sdom:test"><a>2</a><b>4</b>wait<c>8</c></root>
         |                                                                     ^
@@ -93,7 +93,7 @@ class ValidationErrorMessageTest extends FunSuite with Matchers {
       x.validate(schema)
     }
 
-    ex.getXmlContext shouldBe
+    ex.xmlContext shouldBe
       """
         |<root xmlns="urn:org.scalawag.sdom:test">
         |  <a>2</a>
@@ -112,7 +112,7 @@ class ValidationErrorMessageTest extends FunSuite with Matchers {
       x.validate(schema)
     }
 
-    ex.getXmlContext shouldBe
+    ex.xmlContext shouldBe
       """
         |<root xmlns="urn:org.scalawag.sdom:test"><f>...
         |                                         ^
@@ -125,7 +125,7 @@ class ValidationErrorMessageTest extends FunSuite with Matchers {
       x.validate(schema)
     }
 
-    ex.getXmlContext shouldBe
+    ex.xmlContext shouldBe
       """
         |<root xmlns="urn:org.scalawag.sdom:test"><a><f>2</f></a>...
         |                                                    ^
@@ -147,7 +147,7 @@ class ValidationErrorMessageTest extends FunSuite with Matchers {
       x.childElements.head.validate(schema)
     }
 
-    ex.getXmlContext shouldBe
+    ex.xmlContext shouldBe
       """
         |<a>...
         |^
