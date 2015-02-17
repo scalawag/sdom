@@ -32,9 +32,9 @@ object XPath {
     new XPath[Node](new SdomXPath(s))
 
   def apply[T <: Node](s:String)(implicit namespaces:NamespacesLike = Namespaces.Empty,classTag:ClassTag[T]):XPath[T] =
-    apply(s,classTag.runtimeClass.asInstanceOf[Class[T]])
+    apply(s,classTag.runtimeClass.asInstanceOf[Class[T]])(namespaces)
 
-  def apply[T](s:String,runtimeClass:Class[T])(implicit namespaces:NamespacesLike = Namespaces.Empty):XPath[T] =
+  def apply[T](s:String,runtimeClass:Class[T])(implicit namespaces:NamespacesLike):XPath[T] =
     new XPath[T](new SdomXPath(s))
 }
 
