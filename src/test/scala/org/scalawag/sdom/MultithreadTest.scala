@@ -13,7 +13,7 @@ class MultithreadTest extends FunSuite with Matchers {
     val ints = Stream.from(0).take(1000)
     val xmls = ints.map( n => s"<a><b><c>$n</c></b></a>")
     val futures = xmls map { xml =>
-      future {
+      Future {
         val doc = XML.parse(xml)
         ( doc \\ "b" \ * ).head.text.toInt
       }

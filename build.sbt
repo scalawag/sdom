@@ -10,19 +10,21 @@ name := "sdom"
 version := GitFlow.WorkingDir.version.toString
 
 // When I put this at 2.10.0, the tests can't find the scala classes (ever since upgrading to sbt 0.13.0)
-scalaVersion := "2.10.2"
+crossScalaVersions := Seq("2.10.2","2.11.4")
 
 scalacOptions ++= Seq("-unchecked","-deprecation","-feature","-target:jvm-1.6")
-
-crossPaths := false
 
 resolvers += "sonatype-oss-snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
 
 libraryDependencies ++= Seq(
   "org.apache.servicemix.bundles" % "org.apache.servicemix.bundles.jaxen" % "1.1.4_2",
-  "org.scalatest" %% "scalatest" % "2.1.0" % "test",
-  "org.mockito" % "mockito-all" % "1.9.5" % "test"
-)
+  "org.scalatest" %% "scalatest" % "2.2.4" % "test"
+) ++ xmldeps(scalaVersion.value)
+
+def xmldeps(scalaVersion:String) = scalaVersion match {
+  case "2.11.4" => Seq("org.scala-lang.modules" %% "scala-xml" % "1.0.3")
+  case _ => Seq()
+}
 
 publishMavenStyle := true
 
