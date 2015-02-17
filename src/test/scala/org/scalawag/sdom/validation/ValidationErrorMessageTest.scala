@@ -100,9 +100,8 @@ class ValidationErrorMessageTest extends FunSuite with Matchers {
         |  <b>4</b>
         |  <b>5</b>
         |  <b>6</b>
-        |  <b>7</b>
-        |</root>
-        |^
+        |  <b>...
+        |  ^
       """.stripMargin.trim
   }
 
