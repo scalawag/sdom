@@ -2,29 +2,36 @@ package org.scalawag.sdom
 
 import java.io.InputStream
 import java.io.StringReader
-import org.xml.sax.InputSource
+import java.util.concurrent.atomic.AtomicInteger
+import org.xml.sax.{XMLReader, InputSource}
 import javax.xml.parsers.SAXParserFactory
 import org.scalawag.sdom.parse.SdomContentHandler
 
 class Parser(configuration:BuilderConfiguration = BuilderConfiguration.Truest) {
+
+  private[this] val parserFactory = {
+    val f = SAXParserFactory.newInstance()
+    f.setNamespaceAware(true)
+    f
+  }
+
+  private[this] val size = new AtomicInteger(0)
+  private[this] val parsers = new ObjectPool[XMLReader](20,parserFactory.newSAXParser.getXMLReader)
+
   def parse(in:InputStream):Document =
     parse(new InputSource(in))
 
   def parse(xml:String):Document =
     parse(new InputSource(new StringReader(xml)))
 
-  def parse(src:InputSource):Document = {
-    val spf = SAXParserFactory.newInstance()
-    spf.setNamespaceAware(true)
-    val saxParser = spf.newSAXParser
-    val xmlReader = saxParser.getXMLReader
+  def parse(src:InputSource):Document = parsers.use { xmlReader =>
     val handler = new SdomContentHandler(configuration)
-    xmlReader.setContentHandler(handler)
-    xmlReader.setProperty("http://xml.org/sax/properties/lexical-handler",handler)
-    xmlReader.setEntityResolver(null)
-    xmlReader.setErrorHandler(null)
-    xmlReader.parse(src)
-    Document(handler.document.get)
+      xmlReader.setContentHandler(handler)
+      xmlReader.setProperty("http://xml.org/sax/properties/lexical-handler",handler)
+      xmlReader.setEntityResolver(null)
+      xmlReader.setErrorHandler(null)
+      xmlReader.parse(src)
+      Document(handler.document.get)
   }
 }
 
