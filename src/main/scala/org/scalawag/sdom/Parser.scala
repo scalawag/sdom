@@ -7,7 +7,7 @@ import org.xml.sax.{XMLReader, InputSource}
 import javax.xml.parsers.SAXParserFactory
 import org.scalawag.sdom.parse.SdomContentHandler
 
-class Parser(configuration:BuilderConfiguration = BuilderConfiguration.Truest) {
+class Parser(configuration:BuilderConfiguration = BuilderConfiguration.Truest,maxPoolSize:Int = 8) {
 
   private[this] val parserFactory = {
     val f = SAXParserFactory.newInstance()
@@ -16,7 +16,7 @@ class Parser(configuration:BuilderConfiguration = BuilderConfiguration.Truest) {
   }
 
   private[this] val size = new AtomicInteger(0)
-  private[this] val parsers = new ObjectPool[XMLReader](20,parserFactory.newSAXParser.getXMLReader)
+  private[this] val parsers = new ObjectPool[XMLReader](maxPoolSize,parserFactory.newSAXParser.getXMLReader)
 
   def parse(in:InputStream):Document =
     parse(new InputSource(in))
