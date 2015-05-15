@@ -3,15 +3,13 @@ package org.scalawag.sdom
 import org.scalatest.{Matchers,FunSuite}
 import scala.concurrent.{Await, ExecutionContext, future, Future}
 import scala.concurrent.duration.Duration
-import org.scalawag.sdom._
-
-import ExecutionContext.Implicits.global
 
 class MultithreadTest extends FunSuite with Matchers {
+  import ExecutionContext.Implicits.global
 
-  test("1000 parses at a time") {
+  test("1000 parse-and-selects at a time") {
     val ints = Stream.from(0).take(1000)
-    val xmls = ints.map( n => s"<a><b><c>$n</c></b></a>")
+    val xmls = ints.map( n => s"<a><b><c>$n</c></b></a>").force
     val futures = xmls map { xml =>
       future {
         val doc = XML.parse(xml)
@@ -19,6 +17,19 @@ class MultithreadTest extends FunSuite with Matchers {
       }
     }
     Await.result(Future.sequence(futures),Duration.Inf) shouldEqual ints
+  }
+
+  test("10000 parses at a time") {
+    val ints = Stream.from(0).take(10000)
+    val xmls = ints.map( n => s"<a><b><c>$n</c></b></a>").force
+    val start = System.currentTimeMillis
+    val futures = xmls map { xml =>
+      future {
+        XML.parse(xml)
+      }
+    }
+    Await.result(Future.sequence(futures),Duration.Inf)
+    val finish = System.currentTimeMillis
   }
 }
 

@@ -1,9 +1,7 @@
 package org.scalawag.sdom.validation
 
-import java.io.StringWriter
-
 import org.scalawag.sdom._
-import javax.xml.validation.Schema
+import javax.xml.validation.{ValidatorHandler, Schema}
 import org.scalawag.sdom.output.ContextOutputter
 import org.xml.sax.helpers.AttributesImpl
 import org.xml.sax.SAXParseException
@@ -13,10 +11,17 @@ import scala.collection.immutable.Stack
 trait SchemaValidation {
   implicit class SchemaValidator(xml:Element) {
 
-    /* Validates the DOM by walking it and firing the same events that a SAX parser would. */
+    def validate(schema:ValidatorPoolingSchema) {
+      schema.withValidatorHandler(validate)
+    }
 
     def validate(schema:Schema) {
-      val validator = schema.newValidatorHandler
+      validate(schema.newValidatorHandler)
+    }
+
+    /* Validates the DOM by walking it and firing the same events that a SAX parser would. */
+
+    def validate(validator:ValidatorHandler) {
 
       def makeQName(prefix:String,localName:String) =
         if ( prefix == "" )
