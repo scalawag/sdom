@@ -1,7 +1,7 @@
 package org.scalawag.sdom
 
 import org.scalatest.{Matchers,FunSuite}
-import scala.concurrent.{Await, ExecutionContext, future, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 
 class MultithreadTest extends FunSuite with Matchers {
@@ -24,7 +24,7 @@ class MultithreadTest extends FunSuite with Matchers {
     val xmls = ints.map( n => s"<a><b><c>$n</c></b></a>").force
     val start = System.currentTimeMillis
     val futures = xmls map { xml =>
-      future {
+      Future {
         XML.parse(xml)
       }
     }
